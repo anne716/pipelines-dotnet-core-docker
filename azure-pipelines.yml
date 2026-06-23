@@ -20,6 +20,7 @@ variables:
 
     # Web App for Containers
     appName: dotnetcontainerwebapp
+    resourceGroup: myResourceGroup
 
     # Agent VM image name
     vmImageName: 'ubuntu-latest'
@@ -60,3 +61,14 @@ stages:
         azureSubscription: '$(azureServiceConnection)'
         appName: '$(appName)'
         containers: '$(containerRegistry)/$(imageRepository):$(tag)'
+        deployToSlotOrASE: true
+        resourceGroupName: '$(resourceGroup)'
+        slotName: staging
+
+    - task: AzureAppServiceManage@0
+      inputs:
+        azureSubscription: '$(azureServiceConnection)'
+        WebAppName: '$(appName)'
+        ResourceGroupName: '$(resourceGroup)'
+        SourceSlot: staging
+        SwapWithProduction: true
