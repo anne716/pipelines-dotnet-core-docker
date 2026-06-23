@@ -1,0 +1,52 @@
+trigger:
+- main
+
+resources:
+- repo: self
+
+variables:
+    # Service Connection
+    azureServiceConnection: 'Docker Service Connection'
+
+    # Azure Container Registry
+    acrName: testanmgcontainerregistry
+    containerRegistry: testanmgcontainerregistry.azurecr.io
+
+    # Image
+    imageRepository: 'dotnetcoredocker'
+    dockerfilePath: '$(Build.SourcesDirectory)/Dockerfile'
+    buildContext: '$(Build.SourcesDirectory)'
+    tag: '$(Build.BuildId)'
+
+    # Agent VM image name
+    vmImageName: 'ubuntu-latest'
+
+stages:
+- stage: Build
+  displayName: Build and push stage
+  jobs:
+  - job: Build
+    displayName: Build
+    pool:
+      vmImage: $(vmImageName)
+    steps:
+    - task: AzureCLI@2
+      displayName: Build and push an image to container registry
+      inputs:
+        azureSubscription: '$(azureServiceConnection)'
+        scriptType: bash
+        scriptLocation: inlineScript
+        inlineScript: |
+          set -e
+          
+          echo "Logging in to Azure Container Registry..."
+          az acr login --name $(acrName)
+
+          echo "Building Docker image..."
+          docker build \
+            -f $(dockerfilePath) \
+            -t $(containerRegistry)/$(imageRepository):$(tag) \
+            $(buildContext)
+
+          echo "Pushing Docker image..."
+          docker push $(containerRegistry)/$(imageRepository):$(tag)
